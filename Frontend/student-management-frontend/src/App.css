@@ -1,0 +1,65 @@
+h1 {
+  margin-bottom: 10px;
+}
+
+p {
+  font-size: 18px;
+}
+
+nav {
+  padding: 20px;
+  color: white;
+  background-color: #222;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+nav a {
+  color: white;
+  text-decoration: none;
+  margin-left: 20px;
+}
+
+main {
+  padding: 30px;
+}
+.students-container {
+
+  padding: 30px;
+}
+.students-header{
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px ;
+}
+
+.add-buttton {
+  background-color: #222;
+  color: white;
+  padding: 10px 15px;
+  text-decoration: none;
+  border-radius: 5px ;
+}
+table{
+  width: 100%;
+  border-collapse:collapse ;
+  margin-top: 20px;
+
+}
+th,td{
+  border: 1px solid #ddd;
+  padding: 12px;
+  text-align: left;
+
+}
+th{
+  background-color: #222;
+  color: white;
+}
+td button {
+  margin-right:8px ;
+  padding: 6px 12px;
+  cursor: pointer;
+}
