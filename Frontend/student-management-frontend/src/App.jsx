@@ -4,6 +4,7 @@ import Dashboard from "./pages/Dashboard";
 import Students from "./pages/Students";
 import AddStudent from "./pages/AddStudent";
 import EditStudent from "./pages/EditStudent";
+import StudentDetails from "./pages/StudentDetails";
 import "./App.css";
 
 function App() {
@@ -17,6 +18,7 @@ function App() {
         <Route path="/students" element={<Students />} />
         <Route path="/students/add" element={<AddStudent/>} />
         <Route path="/students/edit/:id" element={<EditStudent/>}/>
+        <Route path="/students/:id" element={<StudentDetails />}/>
       </Routes>
     </BrowserRouter>
   );
