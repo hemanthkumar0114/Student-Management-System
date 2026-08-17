@@ -2,280 +2,139 @@ package com.example.Hibernate.Service;
 
 import com.example.Hibernate.DTO.StudentRequestDTO;
 import com.example.Hibernate.DTO.StudentResponseDTO;
+import com.example.Hibernate.DTO.StudentStatsDTO;
 import com.example.Hibernate.Model.Address;
 import com.example.Hibernate.Model.Course;
 import com.example.Hibernate.Model.Student;
+import com.example.Hibernate.Repository.AddressRepository;
+import com.example.Hibernate.Repository.CourseRepository;
 import com.example.Hibernate.Repository.StudentRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
-import com.example.Hibernate.Repository.CourseRepository;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
+@Transactional
 public class StudentServices {
 
     @Autowired
-    private StudentRepository repository;
+    private StudentRepository studentRepository;
+
     @Autowired
     private CourseRepository courseRepository;
 
+    @Autowired
+    private AddressRepository addressRepository;
 
-    // =========================
-    // SAVE ONE STUDENT
-    // =========================
+    public StudentResponseDTO addStudent(StudentRequestDTO dto) {
+        Course course = null;
+        if (dto.getCourseid() != null) {
+            course = courseRepository.findById(dto.getCourseid())
+                    .orElse(null);
+        }
 
-    public StudentResponseDTO save(StudentRequestDTO dto){
-
-        Student student=new Student();
-
-        student.setName(dto.getName());
-
-        student.setEmail(dto.getEmail());
-
-        Address address=new Address();
-
+        Address address = new Address();
         address.setCity(dto.getCity());
-
         address.setState(dto.getState());
-
         address.setPincode(dto.getPincode());
 
+        Student student = new Student();
+        student.setName(dto.getName());
+        student.setEmail(dto.getEmail());
+        student.setCgpa(dto.getCgpa() != null ? dto.getCgpa() : 8.0);
         student.setAddress(address);
-
-        Course course = courseRepository.findById(dto.getCourseid()).orElse(null);
-
         student.setCourse(course);
 
-        Student saved=
-
-                repository.save(student);
-
-        StudentResponseDTO response=
-
-                new StudentResponseDTO();
-
-        response.setId(saved.getId());
-
-        response.setName(saved.getName());
-
-        response.setEmail(saved.getEmail());
-
-        response.setCity(saved.getAddress().getCity());
-
-        response.setCourseName(saved.getCourse().getCourseName());
-
-        return response;
-
+        Student saved = studentRepository.save(student);
+        return new StudentResponseDTO(saved);
     }
 
-
-//    ==========================
-//    ADD THE NEW METHOD HERE
-//    ==========================
-
-    public StudentResponseDTO getStudent(Integer id){
-        Student student = repository.findById(id).orElse(null);
-        if(student == null){
-            return null;
-        }
-        StudentResponseDTO dto = new StudentResponseDTO();
-        dto.setId(student.getId());
-        dto.setName(student.getName());
-        dto.setEmail(student.getEmail());
-        dto.setCourseName(student.getCourse().getCourseName());
-        dto.setCity(student.getAddress().getCity());
-        return dto;
+    public StudentResponseDTO saveStudentEntity(Student student) {
+        Student saved = studentRepository.save(student);
+        return new StudentResponseDTO(saved);
     }
 
-    // =========================
-    // SAVE MULTIPLE STUDENTS
-    // =========================
-
-    public List<Student> saveAllStudents(List<Student> students) {
-        return repository.saveAll(students);
+    public List<StudentResponseDTO> getAllStudents() {
+        return studentRepository.findAll().stream()
+                .map(StudentResponseDTO::new)
+                .collect(Collectors.toList());
     }
 
+    public List<Student> getAllStudentEntities() {
+        return studentRepository.findAll();
+    }
 
-    // =========================
-    // GET ALL STUDENTS
-    // PAGINATION + SORTING
-    // =========================
+    public StudentResponseDTO getStudentById(Integer id) {
+        Student student = studentRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Student not found with id: " + id));
+        return new StudentResponseDTO(student);
+    }
 
-    public Page<Student> getStudents(
-            int page,
-            int size,
-            String sortBy,
-            String direction) {
+    public Student getStudentEntityById(Integer id) {
+        return studentRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Student not found with id: " + id));
+    }
 
-        Sort sort;
+    public StudentResponseDTO updateStudent(Integer id, StudentRequestDTO dto) {
+        Student existing = studentRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Student not found with id: " + id));
 
-        if (direction.equalsIgnoreCase("desc")) {
-            sort = Sort.by(sortBy).descending();
-        } else {
-            sort = Sort.by(sortBy).ascending();
+        existing.setName(dto.getName());
+        existing.setEmail(dto.getEmail());
+        if (dto.getCgpa() != null) {
+            existing.setCgpa(dto.getCgpa());
         }
 
-        Pageable pageable = PageRequest.of(
-                page,
-                size,
-                sort
-        );
+        if (dto.getCourseid() != null) {
+            Course course = courseRepository.findById(dto.getCourseid()).orElse(null);
+            existing.setCourse(course);
+        }
 
-        return repository.findAll(pageable);
+        Address address = existing.getAddress();
+        if (address == null) {
+            address = new Address();
+        }
+        address.setCity(dto.getCity());
+        address.setState(dto.getState());
+        address.setPincode(dto.getPincode());
+        existing.setAddress(address);
+
+        Student updated = studentRepository.save(existing);
+        return new StudentResponseDTO(updated);
     }
 
-
-    // =========================
-    // GET STUDENT BY ID
-    // =========================
-
-    public Student getStudentById(Integer id) {
-
-        return repository.findById(id)
-                .orElse(null);
+    public void deleteStudent(Integer id) {
+        if (!studentRepository.existsById(id)) {
+            throw new RuntimeException("Student not found with id: " + id);
+        }
+        studentRepository.deleteById(id);
     }
 
-
-    // =========================
-    // UPDATE STUDENT
-    // =========================
-
-    public Student updateStudent(Student student) {
-
-        return repository.save(student);
+    public List<StudentResponseDTO> searchStudents(String query) {
+        if (query == null || query.trim().isEmpty()) {
+            return getAllStudents();
+        }
+        return studentRepository.searchStudents(query.trim()).stream()
+                .map(StudentResponseDTO::new)
+                .collect(Collectors.toList());
     }
 
+    public StudentStatsDTO getStats() {
+        long totalStudents = studentRepository.count();
+        long totalCourses = courseRepository.count();
+        Double avgCgpa = studentRepository.getAverageCgpa();
+        double avg = (avgCgpa != null) ? Math.round(avgCgpa * 100.0) / 100.0 : 0.0;
 
-    // =========================
-    // DELETE STUDENT
-    // =========================
+        List<Student> allStudents = studentRepository.findAll();
+        long honors = allStudents.stream().filter(s -> s.getCgpa() != null && s.getCgpa() >= 8.5).count();
 
-    public String deleteStudent(Integer id) {
+        Map<String, Long> perCourse = allStudents.stream()
+                .filter(s -> s.getCourse() != null && s.getCourse().getCourseName() != null)
+                .collect(Collectors.groupingBy(s -> s.getCourse().getCourseName(), Collectors.counting()));
 
-        repository.deleteById(id);
-
-        return "Student Deleted Successfully";
-    }
-
-
-    // =========================
-    // EXACT NAME SEARCH
-    // =========================
-
-    public List<Student> searchName(String name) {
-
-        return repository.findByName(name);
-    }
-
-
-    // =========================
-    // EXACT EMAIL SEARCH
-    // =========================
-
-    public List<Student> searchEmail(String email) {
-
-        return repository.findByEmail(email);
-    }
-
-
-    // =========================
-    // NAME IGNORE CASE
-    // =========================
-
-    public List<Student> findByNameIgnorecase(String name) {
-
-        return repository.findByNameIgnoreCase(name);
-    }
-
-
-    // =========================
-    // NAME STARTING WITH
-    // =========================
-
-    public List<Student> findByNameStringWith(String prefix) {
-
-        return repository.findByNameStartingWith(prefix);
-    }
-
-
-    // =========================
-    // NAME CONTAINING
-    // =========================
-
-    public List<Student> searchByNameContaining(String keyword) {
-
-        return repository.findByNameContaining(keyword);
-    }
-
-
-    // =========================
-    // EMAIL ENDING WITH
-    // =========================
-
-    public List<Student> searchByEmailEndingWith(String domain) {
-
-        return repository.findByEmailEndingWith(domain);
-    }
-
-
-    // =========================
-    // NAME AND EMAIL
-    // =========================
-
-    public List<Student> searchByNameAndEmail(
-            String name,
-            String email) {
-
-        return repository.findByNameAndEmail(
-                name,
-                email
-        );
-    }
-
-
-    // =========================
-    // NAME OR EMAIL
-    // =========================
-
-    public List<Student> searchByNameOrEmail(
-            String name,
-            String email) {
-
-        return repository.findByNameOrEmail(
-                name,
-                email
-        );
-    }
-
-
-    // =========================
-    // COURSE NAME
-    // =========================
-
-    public List<Student> searchByCourseName(
-            String courseName) {
-
-        return repository.findByCourseCourseName(
-                courseName
-        );
-    }
-
-    public List<Student> getAllStudentsJPQL(){
-
-        return repository.getAllStudents();
-
-    }
-
-    public List<Student>
-
-    searchJPQL(String name){
-
-        return repository.findStudentByName(name);
-
+        return new StudentStatsDTO(totalStudents, totalCourses, avg, honors, perCourse);
     }
 }

@@ -24,11 +24,14 @@ public class Address {
     public Address() {
     }
 
-    public Address(Integer id,
-                   String city,
-                   String state,
-                   String pincode) {
+    public Address(Integer id, String city, String state, String pincode) {
         this.id = id;
+        this.city = city;
+        this.state = state;
+        this.pincode = pincode;
+    }
+
+    public Address(String city, String state, String pincode) {
         this.city = city;
         this.state = state;
         this.pincode = pincode;
@@ -40,14 +43,6 @@ public class Address {
 
     public void setId(Integer id) {
         this.id = id;
-    }
-
-    public Student getStudent() {
-        return student;
-    }
-
-    public void setStudent(Student student) {
-        this.student = student;
     }
 
     public String getCity() {
@@ -72,5 +67,13 @@ public class Address {
 
     public void setPincode(String pincode) {
         this.pincode = pincode;
+    }
+
+    public Student getStudent() {
+        return student;
+    }
+
+    public void setStudent(Student student) {
+        this.student = student;
     }
 }

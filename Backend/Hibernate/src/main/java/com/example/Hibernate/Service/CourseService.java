@@ -1,41 +1,42 @@
 package com.example.Hibernate.Service;
 
-
 import com.example.Hibernate.Model.Course;
 import com.example.Hibernate.Repository.CourseRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class CourseService {
 
     @Autowired
-    private CourseRepository repository;
+    private CourseRepository courseRepository;
 
-    //    Save Course
-    public Course saveCourse(Course course) {
-        return repository.save(course);
+    public Course addCourse(Course course) {
+        return courseRepository.save(course);
     }
 
-    //    Get All Courses
     public List<Course> getAllCourses() {
-        return repository.findAll();
+        return courseRepository.findAll();
     }
 
-    //    GEtCourse by Id
-    public Course getCourseById(Integer id) {
-        return repository.findById(id).orElse(null);
+    public Optional<Course> getCourseById(Integer id) {
+        return courseRepository.findById(id);
     }
 
-    //    Update Course
     public Course updateCourse(Course course) {
-    return repository.save(course);
-    }
-    public String deleteCourse(Integer id){
-        repository.deleteById(id);
-        return "Course Deleted Successfully";
+        if (course.getId() != null && courseRepository.existsById(course.getId())) {
+            return courseRepository.save(course);
+        }
+        throw new RuntimeException("Course with ID " + course.getId() + " does not exist.");
     }
 
+    public void deleteCourse(Integer id) {
+        if (!courseRepository.existsById(id)) {
+            throw new RuntimeException("Course not found with id: " + id);
+        }
+        courseRepository.deleteById(id);
+    }
 }

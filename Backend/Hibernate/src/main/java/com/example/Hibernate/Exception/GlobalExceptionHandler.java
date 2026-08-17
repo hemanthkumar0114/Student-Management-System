@@ -4,9 +4,7 @@ import com.example.Hibernate.DTO.ErrorResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Repository;
 import org.springframework.validation.FieldError;
-//import org.springframework.web.ErrorResponse;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -18,30 +16,24 @@ import java.util.Map;
 @ControllerAdvice
 public class GlobalExceptionHandler {
 
+    // =========================================================
+    // VALIDATION EXCEPTION (400)
+    // =========================================================
     @ExceptionHandler(MethodArgumentNotValidException.class)
-
-    public ResponseEntity<ErrorResponse>
-
-    handleValidation(
-
+    public ResponseEntity<ErrorResponse> handleValidation(
             MethodArgumentNotValidException ex,
+            HttpServletRequest request) {
 
-            HttpServletRequest request){
-
-        Map<String,String> errors=new HashMap<>();
+        Map<String, String> errors = new HashMap<>();
 
         ex.getBindingResult()
-
                 .getAllErrors()
-
-                .forEach(error->{
-
-                    String field=((FieldError) error).getField();
-
-                    String message=error.getDefaultMessage();
-
-                    errors.put(field,message);
-
+                .forEach(error -> {
+                    if (error instanceof FieldError fieldError) {
+                        errors.put(fieldError.getField(), fieldError.getDefaultMessage());
+                    } else {
+                        errors.put(error.getObjectName(), error.getDefaultMessage());
+                    }
                 });
 
         ErrorResponse response = new ErrorResponse(
@@ -52,9 +44,91 @@ public class GlobalExceptionHandler {
                 errors
         );
 
-        return new ResponseEntity<>
-                (response,HttpStatus.BAD_REQUEST);
-
+        return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
     }
 
+    // =========================================================
+    // RESOURCE NOT FOUND EXCEPTION (404)
+    // =========================================================
+    @ExceptionHandler(ResourceNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleResourceNotFound(
+            ResourceNotFoundException ex,
+            HttpServletRequest request) {
+
+        ErrorResponse response = new ErrorResponse(
+                LocalDateTime.now(),
+                HttpStatus.NOT_FOUND.value(),
+                ex.getMessage(),
+                request.getRequestURI(),
+                null
+        );
+
+        return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+    }
+
+    // =========================================================
+    // DUPLICATE RESOURCE EXCEPTION (409)
+    // =========================================================
+    @ExceptionHandler(DuplicateResourceException.class)
+    public ResponseEntity<ErrorResponse> handleDuplicateResource(
+            DuplicateResourceException ex,
+            HttpServletRequest request) {
+
+        Map<String, String> errors = new HashMap<>();
+        errors.put("conflict", ex.getMessage());
+
+        ErrorResponse response = new ErrorResponse(
+                LocalDateTime.now(),
+                HttpStatus.CONFLICT.value(),
+                ex.getMessage(),
+                request.getRequestURI(),
+                errors
+        );
+
+        return new ResponseEntity<>(response, HttpStatus.CONFLICT);
+    }
+
+    // =========================================================
+    // ILLEGAL ARGUMENT EXCEPTION (400)
+    // =========================================================
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<ErrorResponse> handleIllegalArgument(
+            IllegalArgumentException ex,
+            HttpServletRequest request) {
+
+        Map<String, String> errors = new HashMap<>();
+        errors.put("error", ex.getMessage());
+
+        ErrorResponse response = new ErrorResponse(
+                LocalDateTime.now(),
+                HttpStatus.BAD_REQUEST.value(),
+                ex.getMessage(),
+                request.getRequestURI(),
+                errors
+        );
+
+        return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+    }
+
+    // =========================================================
+    // GENERAL EXCEPTION (500)
+    // =========================================================
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ErrorResponse> handleGeneralException(
+            Exception ex,
+            HttpServletRequest request) {
+
+        Map<String, String> errors = new HashMap<>();
+        errors.put("error", ex.getMessage() != null ? ex.getMessage() : "An unexpected server error occurred");
+
+        ErrorResponse response = new ErrorResponse(
+                LocalDateTime.now(),
+                HttpStatus.INTERNAL_SERVER_ERROR.value(),
+                "Internal Server Error",
+                request.getRequestURI(),
+                errors
+        );
+
+        return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
 }

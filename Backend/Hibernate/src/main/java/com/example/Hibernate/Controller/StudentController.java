@@ -2,245 +2,100 @@ package com.example.Hibernate.Controller;
 
 import com.example.Hibernate.DTO.StudentRequestDTO;
 import com.example.Hibernate.DTO.StudentResponseDTO;
+import com.example.Hibernate.DTO.StudentStatsDTO;
 import com.example.Hibernate.Model.Student;
 import com.example.Hibernate.Service.StudentServices;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
-@RequestMapping("/students")
-@CrossOrigin(origins = "http://localhost:5173")
+@RequestMapping({"/students", "/api/students"})
+@CrossOrigin(origins = {"http://localhost:5173", "http://localhost:3000", "http://localhost:5174"})
 public class StudentController {
 
     @Autowired
-    private StudentServices service;
-
-
-    // =========================
-    // SAVE ONE STUDENT
-    // =========================
+    private StudentServices studentServices;
 
     @PostMapping
-    public StudentResponseDTO save
-            (@Valid @RequestBody StudentRequestDTO dto)
-    {
-        return service.save(dto);
+    public ResponseEntity<StudentResponseDTO> addStudent(@Valid @RequestBody StudentRequestDTO studentRequestDTO) {
+        StudentResponseDTO response = studentServices.addStudent(studentRequestDTO);
+        return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
 
-
-    // =========================
-    // SAVE MULTIPLE STUDENTS
-    // =========================
-
-    @PostMapping("/bulk")
-    public List<Student> saveMultipleStudents(
-            @Valid @RequestBody List<@Valid Student> students) {
-
-        return service.saveAllStudents(students);
+    @PostMapping("/entity")
+    public ResponseEntity<StudentResponseDTO> addStudentEntity(@Valid @RequestBody Student student) {
+        StudentResponseDTO response = studentServices.saveStudentEntity(student);
+        return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
-
-
-    // =========================
-    // GET ALL STUDENTS
-    // PAGINATION + SORTING
-    // =========================
 
     @GetMapping
-    public Page<Student> getStudents(
-
-            @RequestParam(defaultValue = "0")
-            int page,
-
-            @RequestParam(defaultValue = "5")
-            int size,
-
-            @RequestParam(defaultValue = "id")
-            String sortBy,
-
-            @RequestParam(defaultValue = "asc")
-            String direction) {
-
-        return service.getStudents(
-                page,
-                size,
-                sortBy,
-                direction
-        );
+    public ResponseEntity<List<StudentResponseDTO>> getAllStudents(
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) String name) {
+        String query = search != null ? search : name;
+        if (query != null && !query.trim().isEmpty()) {
+            return ResponseEntity.ok(studentServices.searchStudents(query));
+        }
+        return ResponseEntity.ok(studentServices.getAllStudents());
     }
 
+    @GetMapping("/{id}")
+    public ResponseEntity<StudentResponseDTO> getStudentById(@PathVariable Integer id) {
+        try {
+            StudentResponseDTO student = studentServices.getStudentById(id);
+            return ResponseEntity.ok(student);
+        } catch (RuntimeException e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
 
-    // =========================
-    // GET STUDENT BY ID
-    // =========================
-
-   @GetMapping("/{id}")
-   public StudentResponseDTO getStudent(@PathVariable Integer id){
-        return service.getStudent(id);
-   }
-
-    // =========================
-    // UPDATE STUDENT
-    // =========================
+    @PutMapping("/{id}")
+    public ResponseEntity<StudentResponseDTO> updateStudent(
+            @PathVariable Integer id,
+            @Valid @RequestBody StudentRequestDTO studentRequestDTO) {
+        try {
+            StudentResponseDTO updated = studentServices.updateStudent(id, studentRequestDTO);
+            return ResponseEntity.ok(updated);
+        } catch (RuntimeException e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
 
     @PutMapping
-    public Student updateStudent(
-            @RequestBody Student student) {
-
-        return service.updateStudent(student);
+    public ResponseEntity<StudentResponseDTO> updateStudentBody(@Valid @RequestBody StudentRequestDTO studentRequestDTO, @RequestParam(required = false) Integer id) {
+        if (id != null) {
+            try {
+                StudentResponseDTO updated = studentServices.updateStudent(id, studentRequestDTO);
+                return ResponseEntity.ok(updated);
+            } catch (RuntimeException e) {
+                return ResponseEntity.notFound().build();
+            }
+        }
+        return ResponseEntity.badRequest().build();
     }
-
-
-    // =========================
-    // DELETE STUDENT
-    // =========================
 
     @DeleteMapping("/{id}")
-    public String deleteStudent(
-            @PathVariable Integer id) {
-
-        return service.deleteStudent(id);
+    public ResponseEntity<String> deleteStudent(@PathVariable Integer id) {
+        try {
+            studentServices.deleteStudent(id);
+            return ResponseEntity.ok("Student deleted successfully with ID: " + id);
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        }
     }
-
-
-    // =========================
-    // EXACT NAME
-    // =========================
 
     @GetMapping("/search")
-    public List<Student> searchStudent(
-            @RequestParam String name) {
-
-        return service.searchName(name);
+    public ResponseEntity<List<StudentResponseDTO>> searchStudents(@RequestParam("query") String query) {
+        return ResponseEntity.ok(studentServices.searchStudents(query));
     }
 
-
-    // =========================
-    // EXACT EMAIL
-    // =========================
-
-    @GetMapping("/email")
-    public List<Student> searchEmail(
-            @RequestParam String email) {
-
-        return service.searchEmail(email);
+    @GetMapping("/stats")
+    public ResponseEntity<StudentStatsDTO> getStats() {
+        return ResponseEntity.ok(studentServices.getStats());
     }
-
-
-    // =========================
-    // NAME IGNORE CASE
-    // =========================
-
-    @GetMapping("/ignore-case")
-    public List<Student> findByNameIgnoreCase(
-            @RequestParam String name) {
-
-        return service.findByNameIgnorecase(name);
-    }
-
-
-    // =========================
-    // NAME STARTING WITH
-    // =========================
-
-    @GetMapping("/starts-with")
-    public List<Student> findByNameStartingWith(
-            @RequestParam String prefix) {
-
-        return service.findByNameStringWith(prefix);
-    }
-
-
-    // =========================
-    // NAME CONTAINING
-    // =========================
-
-    @GetMapping("/search/name")
-    public List<Student> searchByNameContaining(
-            @RequestParam String keyword) {
-
-        return service.searchByNameContaining(keyword);
-    }
-
-
-    // =========================
-    // EMAIL ENDING WITH
-    // =========================
-
-    @GetMapping("/search/email")
-    public List<Student> searchByEmailEndingWith(
-            @RequestParam String domain) {
-
-        return service.searchByEmailEndingWith(domain);
-    }
-
-
-    // =========================
-    // NAME AND EMAIL
-    // =========================
-
-    @GetMapping("/search/name-email")
-    public List<Student> searchByNameAndEmail(
-            @RequestParam String name,
-            @RequestParam String email) {
-
-        return service.searchByNameAndEmail(
-                name,
-                email
-        );
-    }
-
-
-    // =========================
-    // NAME OR EMAIL
-    // =========================
-
-    @GetMapping("/search/name-or-email")
-    public List<Student> searchByNameOrEmail(
-            @RequestParam String name,
-            @RequestParam String email) {
-
-        return service.searchByNameOrEmail(
-                name,
-                email
-        );
-    }
-
-
-    // =========================
-    // COURSE NAME
-    // =========================
-
-    @GetMapping("/search/course")
-    public List<Student> searchByCourseName(
-            @RequestParam String courseName) {
-
-        return service.searchByCourseName(
-                courseName
-        );
-    }
-    @GetMapping("/jpql")
-
-    public List<Student>
-
-    getStudentsJPQL(){
-
-        return service.getAllStudentsJPQL();
-
-    }
-    @GetMapping("/jpql/name")
-
-    public List<Student>
-
-    search(
-
-            @RequestParam String name){
-
-        return service.searchJPQL(name);
-
-    }
-
 }
