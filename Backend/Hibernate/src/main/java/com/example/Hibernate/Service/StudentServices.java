@@ -8,10 +8,11 @@ import com.example.Hibernate.Exception.ResourceNotFoundException;
 import com.example.Hibernate.Model.Address;
 import com.example.Hibernate.Model.Course;
 import com.example.Hibernate.Model.Student;
-import com.example.Hibernate.Repository.AddressRepository;
 import com.example.Hibernate.Repository.CourseRepository;
 import com.example.Hibernate.Repository.StudentRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,9 +28,6 @@ public class StudentServices {
 
     @Autowired
     private CourseRepository courseRepository;
-
-    @Autowired
-    private AddressRepository addressRepository;
 
 
     // =========================================================
@@ -72,36 +70,19 @@ public class StudentServices {
 
 
     // =========================================================
-    // SAVE STUDENT ENTITY
-    // =========================================================
-
-    public StudentResponseDTO saveStudentEntity(Student student) {
-
-        // Check duplicate email when saving directly
-        if (student.getEmail() != null &&
-                studentRepository.existsByEmail(student.getEmail())) {
-
-            throw new DuplicateResourceException(
-                    "Student with email '" + student.getEmail() + "' already exists"
-            );
-        }
-
-        Student saved = studentRepository.save(student);
-
-        return new StudentResponseDTO(saved);
-    }
-
-
-    // =========================================================
-    // GET ALL STUDENTS
+    // GET ALL STUDENTS (UNPAGINATED & PAGINATED)
     // =========================================================
 
     public List<StudentResponseDTO> getAllStudents() {
-
         return studentRepository.findAll()
                 .stream()
                 .map(StudentResponseDTO::new)
                 .collect(Collectors.toList());
+    }
+
+    public Page<StudentResponseDTO> getAllStudents(Pageable pageable) {
+        return studentRepository.findAll(pageable)
+                .map(StudentResponseDTO::new);
     }
 
 
@@ -110,7 +91,6 @@ public class StudentServices {
     // =========================================================
 
     public List<Student> getAllStudentEntities() {
-
         return studentRepository.findAll();
     }
 
@@ -120,7 +100,6 @@ public class StudentServices {
     // =========================================================
 
     public StudentResponseDTO getStudentById(Integer id) {
-
         Student student = studentRepository.findById(id)
                 .orElseThrow(() ->
                         new ResourceNotFoundException(
@@ -137,7 +116,6 @@ public class StudentServices {
     // =========================================================
 
     public Student getStudentEntityById(Integer id) {
-
         return studentRepository.findById(id)
                 .orElseThrow(() ->
                         new ResourceNotFoundException(
@@ -238,13 +216,12 @@ public class StudentServices {
 
 
     // =========================================================
-    // SEARCH STUDENTS
+    // SEARCH STUDENTS (UNPAGINATED & PAGINATED)
     // =========================================================
 
     public List<StudentResponseDTO> searchStudents(String query) {
 
         if (query == null || query.trim().isEmpty()) {
-
             return getAllStudents();
         }
 
@@ -255,9 +232,20 @@ public class StudentServices {
                 .collect(Collectors.toList());
     }
 
+    public Page<StudentResponseDTO> searchStudents(String query, Pageable pageable) {
+
+        if (query == null || query.trim().isEmpty()) {
+            return getAllStudents(pageable);
+        }
+
+        return studentRepository
+                .searchStudents(query.trim(), pageable)
+                .map(StudentResponseDTO::new);
+    }
+
 
     // =========================================================
-    // STUDENT STATISTICS
+    // STUDENT STATISTICS (JPQL AGGREGATED)
     // =========================================================
 
     public StudentStatsDTO getStats() {
@@ -273,31 +261,20 @@ public class StudentServices {
                 : 0.0;
 
 
-        // Students with CGPA >= 8.5
-        List<Student> allStudents = studentRepository.findAll();
-
-        long honors = allStudents
-                .stream()
-                .filter(s ->
-                        s.getCgpa() != null &&
-                                s.getCgpa() >= 8.5
-                )
-                .count();
+        // Students with CGPA >= 8.5 via JPQL aggregate
+        long honors = studentRepository.countByCgpaGreaterThanEqual(8.5);
 
 
-        // Students per course
-        Map<String, Long> perCourse = allStudents
-                .stream()
-                .filter(s ->
-                        s.getCourse() != null &&
-                                s.getCourse().getCourseName() != null
-                )
-                .collect(
-                        Collectors.groupingBy(
-                                s -> s.getCourse().getCourseName(),
-                                Collectors.counting()
-                        )
-                );
+        // Students per course via JPQL aggregate
+        Map<String, Long> perCourse = new HashMap<>();
+        List<Object[]> courseCounts = studentRepository.countStudentsPerCourse();
+        for (Object[] row : courseCounts) {
+            String courseName = (String) row[0];
+            Long count = (Long) row[1];
+            if (courseName != null && count != null) {
+                perCourse.put(courseName, count);
+            }
+        }
 
 
         return new StudentStatsDTO(

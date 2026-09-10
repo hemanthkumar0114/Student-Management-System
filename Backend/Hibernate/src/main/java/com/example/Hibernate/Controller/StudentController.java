@@ -3,19 +3,22 @@ package com.example.Hibernate.Controller;
 import com.example.Hibernate.DTO.StudentRequestDTO;
 import com.example.Hibernate.DTO.StudentResponseDTO;
 import com.example.Hibernate.DTO.StudentStatsDTO;
-import com.example.Hibernate.Model.Student;
 import com.example.Hibernate.Service.StudentServices;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping({"/students", "/api/students"})
-@CrossOrigin(origins = {"http://localhost:5173", "http://localhost:3000", "http://localhost:5174"})
 public class StudentController {
 
     @Autowired
@@ -27,66 +30,47 @@ public class StudentController {
         return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
 
-    @PostMapping("/entity")
-    public ResponseEntity<StudentResponseDTO> addStudentEntity(@Valid @RequestBody Student student) {
-        StudentResponseDTO response = studentServices.saveStudentEntity(student);
-        return new ResponseEntity<>(response, HttpStatus.CREATED);
-    }
-
     @GetMapping
-    public ResponseEntity<List<StudentResponseDTO>> getAllStudents(
+    public ResponseEntity<Page<StudentResponseDTO>> getAllStudents(
             @RequestParam(required = false) String search,
-            @RequestParam(required = false) String name) {
+            @RequestParam(required = false) String name,
+            @PageableDefault(page = 0, size = 20, sort = "id", direction = Sort.Direction.ASC) Pageable pageable) {
         String query = search != null ? search : name;
         if (query != null && !query.trim().isEmpty()) {
-            return ResponseEntity.ok(studentServices.searchStudents(query));
+            return ResponseEntity.ok(studentServices.searchStudents(query, pageable));
         }
-        return ResponseEntity.ok(studentServices.getAllStudents());
+        return ResponseEntity.ok(studentServices.getAllStudents(pageable));
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<StudentResponseDTO> getStudentById(@PathVariable Integer id) {
-        try {
-            StudentResponseDTO student = studentServices.getStudentById(id);
-            return ResponseEntity.ok(student);
-        } catch (RuntimeException e) {
-            return ResponseEntity.notFound().build();
-        }
+        StudentResponseDTO student = studentServices.getStudentById(id);
+        return ResponseEntity.ok(student);
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<StudentResponseDTO> updateStudent(
             @PathVariable Integer id,
             @Valid @RequestBody StudentRequestDTO studentRequestDTO) {
-        try {
-            StudentResponseDTO updated = studentServices.updateStudent(id, studentRequestDTO);
-            return ResponseEntity.ok(updated);
-        } catch (RuntimeException e) {
-            return ResponseEntity.notFound().build();
-        }
+        StudentResponseDTO updated = studentServices.updateStudent(id, studentRequestDTO);
+        return ResponseEntity.ok(updated);
     }
 
     @PutMapping
-    public ResponseEntity<StudentResponseDTO> updateStudentBody(@Valid @RequestBody StudentRequestDTO studentRequestDTO, @RequestParam(required = false) Integer id) {
-        if (id != null) {
-            try {
-                StudentResponseDTO updated = studentServices.updateStudent(id, studentRequestDTO);
-                return ResponseEntity.ok(updated);
-            } catch (RuntimeException e) {
-                return ResponseEntity.notFound().build();
-            }
+    public ResponseEntity<StudentResponseDTO> updateStudentBody(
+            @Valid @RequestBody StudentRequestDTO studentRequestDTO,
+            @RequestParam(required = false) Integer id) {
+        if (id == null) {
+            throw new IllegalArgumentException("Student ID parameter is required for update");
         }
-        return ResponseEntity.badRequest().build();
+        StudentResponseDTO updated = studentServices.updateStudent(id, studentRequestDTO);
+        return ResponseEntity.ok(updated);
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<String> deleteStudent(@PathVariable Integer id) {
-        try {
-            studentServices.deleteStudent(id);
-            return ResponseEntity.ok("Student deleted successfully with ID: " + id);
-        } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
-        }
+    public ResponseEntity<Map<String, String>> deleteStudent(@PathVariable Integer id) {
+        studentServices.deleteStudent(id);
+        return ResponseEntity.ok(Map.of("message", "Student deleted successfully with ID: " + id));
     }
 
     @GetMapping("/search")

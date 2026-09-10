@@ -27,9 +27,7 @@ public class Student {
     @Column(name = "cgpa")
     private Double cgpa = 8.0;
 
-    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true)
-    @JoinColumn(name = "address_id")
-    @JsonManagedReference
+    @Embedded
     private Address address;
 
     @ManyToOne(fetch = FetchType.EAGER)
@@ -94,9 +92,6 @@ public class Student {
 
     public void setAddress(Address address) {
         this.address = address;
-        if (address != null) {
-            address.setStudent(this);
-        }
     }
 
     public Course getCourse() {

@@ -1,4 +1,4 @@
-import { getAuthHeaders } from "./authService";
+import { authFetch } from "./authService";
 
 const API_URL = "http://localhost:8080/students";
 
@@ -7,14 +7,13 @@ const API_URL = "http://localhost:8080/students";
 // =========================================================
 export const getStudents = async (query = "") => {
   const url = query ? `${API_URL}?search=${encodeURIComponent(query)}` : API_URL;
-  const response = await fetch(url, {
-    headers: getAuthHeaders(),
-  });
+  const response = await authFetch(url);
   if (!response.ok) {
     const errorText = await response.text();
     throw new Error(errorText || "Failed to fetch students");
   }
-  return response.json();
+  const data = await response.json();
+  return Array.isArray(data) ? data : (data.content || []);
 };
 
 // =========================================================
@@ -24,9 +23,7 @@ export const getStudentById = async (id) => {
   if (!id || id === ":id" || id === "undefined") {
     throw new Error("Invalid student ID");
   }
-  const response = await fetch(`${API_URL}/${id}`, {
-    headers: getAuthHeaders(),
-  });
+  const response = await authFetch(`${API_URL}/${id}`);
   if (!response.ok) {
     const errorText = await response.text();
     throw new Error(errorText || "Failed to fetch student details");
@@ -38,9 +35,8 @@ export const getStudentById = async (id) => {
 // ADD STUDENT
 // =========================================================
 export const addStudent = async (student) => {
-  const response = await fetch(API_URL, {
+  const response = await authFetch(API_URL, {
     method: "POST",
-    headers: getAuthHeaders(),
     body: JSON.stringify(student),
   });
 
@@ -67,9 +63,8 @@ export const updateStudent = async (idOrStudent, studentData) => {
     throw new Error("Student ID is required for update");
   }
 
-  const response = await fetch(`${API_URL}/${id}`, {
+  const response = await authFetch(`${API_URL}/${id}`, {
     method: "PUT",
-    headers: getAuthHeaders(),
     body: JSON.stringify(body),
   });
 
@@ -88,9 +83,8 @@ export const deleteStudent = async (id) => {
     throw new Error("Invalid student ID");
   }
 
-  const response = await fetch(`${API_URL}/${id}`, {
+  const response = await authFetch(`${API_URL}/${id}`, {
     method: "DELETE",
-    headers: getAuthHeaders(),
   });
 
   if (!response.ok) {
@@ -104,9 +98,7 @@ export const deleteStudent = async (id) => {
 // SEARCH STUDENTS
 // =========================================================
 export const searchStudents = async (query) => {
-  const response = await fetch(`${API_URL}/search?query=${encodeURIComponent(query)}`, {
-    headers: getAuthHeaders(),
-  });
+  const response = await authFetch(`${API_URL}/search?query=${encodeURIComponent(query)}`);
   if (!response.ok) {
     throw new Error("Failed to search students");
   }
@@ -117,9 +109,7 @@ export const searchStudents = async (query) => {
 // GET STUDENT STATS
 // =========================================================
 export const getStudentStats = async () => {
-  const response = await fetch(`${API_URL}/stats`, {
-    headers: getAuthHeaders(),
-  });
+  const response = await authFetch(`${API_URL}/stats`);
   if (!response.ok) {
     throw new Error("Failed to fetch campus stats");
   }

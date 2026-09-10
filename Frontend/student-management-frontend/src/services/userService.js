@@ -1,11 +1,9 @@
-import { getAuthHeaders } from "./authService";
+import { authFetch } from "./authService";
 
 const API_URL = "http://localhost:8080/admin/users";
 
 export const getAllUsers = async () => {
-  const response = await fetch(API_URL, {
-    headers: getAuthHeaders()
-  });
+  const response = await authFetch(API_URL);
   if (!response.ok) {
     const errorText = await response.text();
     throw new Error(errorText || "Failed to fetch user accounts");
@@ -14,9 +12,8 @@ export const getAllUsers = async () => {
 };
 
 export const createUser = async (userData) => {
-  const response = await fetch(API_URL, {
+  const response = await authFetch(API_URL, {
     method: "POST",
-    headers: getAuthHeaders(),
     body: JSON.stringify(userData)
   });
   if (!response.ok) {
@@ -27,9 +24,8 @@ export const createUser = async (userData) => {
 };
 
 export const updateUser = async (id, userData) => {
-  const response = await fetch(`${API_URL}/${id}`, {
+  const response = await authFetch(`${API_URL}/${id}`, {
     method: "PUT",
-    headers: getAuthHeaders(),
     body: JSON.stringify(userData)
   });
   if (!response.ok) {
@@ -40,9 +36,8 @@ export const updateUser = async (id, userData) => {
 };
 
 export const toggleUserStatus = async (id) => {
-  const response = await fetch(`${API_URL}/${id}/status`, {
+  const response = await authFetch(`${API_URL}/${id}/status`, {
     method: "PATCH",
-    headers: getAuthHeaders()
   });
   if (!response.ok) {
     const data = await response.json().catch(() => ({}));
@@ -52,9 +47,8 @@ export const toggleUserStatus = async (id) => {
 };
 
 export const deleteUser = async (id) => {
-  const response = await fetch(`${API_URL}/${id}`, {
+  const response = await authFetch(`${API_URL}/${id}`, {
     method: "DELETE",
-    headers: getAuthHeaders()
   });
   if (!response.ok) {
     const data = await response.json().catch(() => ({}));

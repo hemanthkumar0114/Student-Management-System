@@ -37,7 +37,6 @@ public class StudentResponseDTO {
             // Address details
             if (student.getAddress() != null) {
                 this.address = new AddressDTO(
-                        student.getAddress().getId(),
                         student.getAddress().getCity(),
                         student.getAddress().getState(),
                         student.getAddress().getPincode()
@@ -62,7 +61,6 @@ public class StudentResponseDTO {
 
     public static class AddressDTO {
 
-        private Integer id;
         private String city;
         private String state;
         private String pincode;
@@ -70,19 +68,10 @@ public class StudentResponseDTO {
         public AddressDTO() {
         }
 
-        public AddressDTO(Integer id, String city, String state, String pincode) {
-            this.id = id;
+        public AddressDTO(String city, String state, String pincode) {
             this.city = city;
             this.state = state;
             this.pincode = pincode;
-        }
-
-        public Integer getId() {
-            return id;
-        }
-
-        public void setId(Integer id) {
-            this.id = id;
         }
 
         public String getCity() {

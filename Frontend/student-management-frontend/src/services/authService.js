@@ -37,6 +37,24 @@ export const getAuthHeaders = () => {
   };
 };
 
+export const authFetch = async (url, options = {}) => {
+  const headers = {
+    ...getAuthHeaders(),
+    ...(options.headers || {})
+  };
+
+  const response = await fetch(url, { ...options, headers });
+
+  if (response.status === 401) {
+    clearAuthData();
+    if (typeof window !== "undefined" && window.location.pathname !== "/login") {
+      window.location.href = "/login";
+    }
+  }
+
+  return response;
+};
+
 export const loginApi = async (usernameOrEmail, password) => {
   const response = await fetch(`${API_URL}/login`, {
     method: "POST",
@@ -59,9 +77,7 @@ export const loginApi = async (usernameOrEmail, password) => {
 };
 
 export const getCurrentUserApi = async () => {
-  const response = await fetch(`${API_URL}/me`, {
-    headers: getAuthHeaders()
-  });
+  const response = await authFetch(`${API_URL}/me`);
 
   if (!response.ok) {
     clearAuthData();

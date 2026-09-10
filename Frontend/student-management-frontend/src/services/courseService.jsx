@@ -1,4 +1,4 @@
-import { getAuthHeaders } from "./authService";
+import { authFetch } from "./authService";
 
 const API_URL = "http://localhost:8080/courses";
 
@@ -6,9 +6,7 @@ const API_URL = "http://localhost:8080/courses";
 // GET ALL COURSES
 // =========================================================
 export const getCourses = async () => {
-  const response = await fetch(API_URL, {
-    headers: getAuthHeaders(),
-  });
+  const response = await authFetch(API_URL);
   if (!response.ok) {
     const errorText = await response.text();
     throw new Error(errorText || "Failed to fetch courses");
@@ -23,9 +21,7 @@ export const getCourseById = async (id) => {
   if (!id || id === ":id") {
     throw new Error("Invalid course ID");
   }
-  const response = await fetch(`${API_URL}/${id}`, {
-    headers: getAuthHeaders(),
-  });
+  const response = await authFetch(`${API_URL}/${id}`);
   if (!response.ok) {
     const errorText = await response.text();
     throw new Error(errorText || "Failed to fetch course");
@@ -37,9 +33,8 @@ export const getCourseById = async (id) => {
 // ADD COURSE
 // =========================================================
 export const addCourse = async (course) => {
-  const response = await fetch(API_URL, {
+  const response = await authFetch(API_URL, {
     method: "POST",
-    headers: getAuthHeaders(),
     body: JSON.stringify(course),
   });
 
@@ -66,9 +61,8 @@ export const updateCourse = async (idOrCourse, courseData) => {
     throw new Error("Course ID is required for update");
   }
 
-  const response = await fetch(`${API_URL}/${id}`, {
+  const response = await authFetch(`${API_URL}/${id}`, {
     method: "PUT",
-    headers: getAuthHeaders(),
     body: JSON.stringify(body),
   });
 
@@ -86,9 +80,8 @@ export const deleteCourse = async (id) => {
   if (!id || id === ":id") {
     throw new Error("Invalid course ID");
   }
-  const response = await fetch(`${API_URL}/${id}`, {
+  const response = await authFetch(`${API_URL}/${id}`, {
     method: "DELETE",
-    headers: getAuthHeaders(),
   });
 
   if (!response.ok) {
