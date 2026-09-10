@@ -2,11 +2,16 @@ package com.example.Hibernate.Config;
 
 import com.example.Hibernate.Model.Address;
 import com.example.Hibernate.Model.Course;
+import com.example.Hibernate.Model.Role;
 import com.example.Hibernate.Model.Student;
+import com.example.Hibernate.Model.User;
 import com.example.Hibernate.Repository.CourseRepository;
 import com.example.Hibernate.Repository.StudentRepository;
+import com.example.Hibernate.Repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
 import java.util.Arrays;
@@ -21,8 +26,47 @@ public class DataInitializer implements CommandLineRunner {
     @Autowired
     private CourseRepository courseRepository;
 
+    @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
+    @Value("${app.admin.username:admin}")
+    private String adminUsername;
+
+    @Value("${app.admin.email:admin@example.com}")
+    private String adminEmail;
+
+    @Value("${app.admin.password:admin123}")
+    private String adminPassword;
+
     @Override
     public void run(String... args) throws Exception {
+        // Seed default ADMIN account if no admin exists
+        if (!userRepository.existsByRole(Role.ADMIN)) {
+            User admin = new User(
+                adminUsername,
+                adminEmail,
+                passwordEncoder.encode(adminPassword),
+                Role.ADMIN
+            );
+            userRepository.save(admin);
+            System.out.println(">>> Initialized default ADMIN account: " + adminUsername);
+        }
+
+        // Seed default USER account if no user exists
+        if (!userRepository.existsByRole(Role.USER)) {
+            User user = new User(
+                "user",
+                "user@example.com",
+                passwordEncoder.encode("user123"),
+                Role.USER
+            );
+            userRepository.save(user);
+            System.out.println(">>> Initialized default USER account: user");
+        }
+
         if (courseRepository.count() == 0) {
             // 10 Courses
             Course c1 = new Course("Java Full Stack Development", "6 Months", "Software Engineering");

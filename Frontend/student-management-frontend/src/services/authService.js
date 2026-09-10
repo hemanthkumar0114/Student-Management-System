@@ -1,0 +1,72 @@
+const API_URL = "http://localhost:8080/auth";
+
+export const getAuthToken = () => {
+  return localStorage.getItem("ucms_token");
+};
+
+export const getStoredUser = () => {
+  const userJson = localStorage.getItem("ucms_user");
+  if (!userJson) return null;
+  try {
+    return JSON.parse(userJson);
+  } catch (e) {
+    return null;
+  }
+};
+
+export const setAuthData = (token, user) => {
+  localStorage.setItem("ucms_token", token);
+  localStorage.setItem("ucms_user", JSON.stringify(user));
+};
+
+export const clearAuthData = () => {
+  localStorage.removeItem("ucms_token");
+  localStorage.removeItem("ucms_user");
+};
+
+export const getAuthHeaders = () => {
+  const token = getAuthToken();
+  if (token) {
+    return {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${token}`
+    };
+  }
+  return {
+    "Content-Type": "application/json"
+  };
+};
+
+export const loginApi = async (usernameOrEmail, password) => {
+  const response = await fetch(`${API_URL}/login`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({ usernameOrEmail, password })
+  });
+
+  const data = await response.json().catch(() => ({}));
+
+  if (!response.ok) {
+    throw new Error(data.message || "Invalid username/email or password.");
+  }
+
+  const { token, id, username, email, role, enabled } = data;
+  const user = { id, username, email, role, enabled };
+  setAuthData(token, user);
+  return { token, user };
+};
+
+export const getCurrentUserApi = async () => {
+  const response = await fetch(`${API_URL}/me`, {
+    headers: getAuthHeaders()
+  });
+
+  if (!response.ok) {
+    clearAuthData();
+    throw new Error("Session expired or invalid");
+  }
+
+  return response.json();
+};

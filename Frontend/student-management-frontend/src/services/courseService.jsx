@@ -1,10 +1,14 @@
+import { getAuthHeaders } from "./authService";
+
 const API_URL = "http://localhost:8080/courses";
 
 // =========================================================
 // GET ALL COURSES
 // =========================================================
 export const getCourses = async () => {
-  const response = await fetch(API_URL);
+  const response = await fetch(API_URL, {
+    headers: getAuthHeaders(),
+  });
   if (!response.ok) {
     const errorText = await response.text();
     throw new Error(errorText || "Failed to fetch courses");
@@ -19,7 +23,9 @@ export const getCourseById = async (id) => {
   if (!id || id === ":id") {
     throw new Error("Invalid course ID");
   }
-  const response = await fetch(`${API_URL}/${id}`);
+  const response = await fetch(`${API_URL}/${id}`, {
+    headers: getAuthHeaders(),
+  });
   if (!response.ok) {
     const errorText = await response.text();
     throw new Error(errorText || "Failed to fetch course");
@@ -33,9 +39,7 @@ export const getCourseById = async (id) => {
 export const addCourse = async (course) => {
   const response = await fetch(API_URL, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
+    headers: getAuthHeaders(),
     body: JSON.stringify(course),
   });
 
@@ -64,9 +68,7 @@ export const updateCourse = async (idOrCourse, courseData) => {
 
   const response = await fetch(`${API_URL}/${id}`, {
     method: "PUT",
-    headers: {
-      "Content-Type": "application/json",
-    },
+    headers: getAuthHeaders(),
     body: JSON.stringify(body),
   });
 
@@ -86,6 +88,7 @@ export const deleteCourse = async (id) => {
   }
   const response = await fetch(`${API_URL}/${id}`, {
     method: "DELETE",
+    headers: getAuthHeaders(),
   });
 
   if (!response.ok) {
