@@ -16,7 +16,8 @@ Backend/target/
 
 # Environment / secrets
 .env
-.env.
+.env.*
+!.env.example
 Backend/Hibernate/target/
 Backend/Hibernate/src/main/resources/application.properties
 # OS
