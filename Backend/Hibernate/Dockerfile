@@ -1,4 +1,3 @@
-
 # Stage 1: Build the Spring Boot application
 FROM maven:3.9-eclipse-temurin-21 AS build
 
@@ -21,10 +20,11 @@ FROM eclipse-temurin:21-jre
 
 WORKDIR /app
 
-# Copy the generated JAR file
+# Copy generated JAR file
 COPY --from=build /app/target/*.jar app.jar
 
-# Start the application
+# Render dynamically assigns the application port
 EXPOSE 8080
 
+# Start the application
 ENTRYPOINT ["java", "-jar", "app.jar"]

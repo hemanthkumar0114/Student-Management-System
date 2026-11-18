@@ -12,10 +12,10 @@ function Navbar() {
   useEffect(() => {
     const checkBackend = async () => {
       try {
-        const res = await fetch("http://localhost:8080/auth/me", {
-          method: "GET",
-          headers: getAuthHeaders()
-        });
+            const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/auth/me`, {
+                method: "GET",
+                headers: getAuthHeaders()
+                });
         if (res.status !== 500 && res.status !== 502 && res.status !== 503) {
           setBackendStatus("online");
         } else {

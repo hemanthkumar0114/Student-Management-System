@@ -1,5 +1,4 @@
-const API_URL = "http://localhost:8080/auth";
-
+const API_URL = `${import.meta.env.VITE_API_BASE_URL}/auth`;
 export const getAuthToken = () => {
   return localStorage.getItem("ucms_token");
 };

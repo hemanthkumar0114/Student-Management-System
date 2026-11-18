@@ -1,7 +1,6 @@
 import { authFetch } from "./authService";
 
-const API_URL = "http://localhost:8080/admin/users";
-
+const API_URL = `${import.meta.env.VITE_API_BASE_URL}/admin/users`;
 export const getAllUsers = async () => {
   const response = await authFetch(API_URL);
   if (!response.ok) {

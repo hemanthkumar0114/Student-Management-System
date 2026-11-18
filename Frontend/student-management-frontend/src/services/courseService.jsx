@@ -1,7 +1,6 @@
 import { authFetch } from "./authService";
 
-const API_URL = "http://localhost:8080/courses";
-
+const API_URL = `${import.meta.env.VITE_API_BASE_URL}/courses`;
 // =========================================================
 // GET ALL COURSES
 // =========================================================
