@@ -12,6 +12,9 @@ RUN mvn dependency:go-offline
 # Copy application source code
 COPY src ./src
 
+# Create application.properties from the safe template
+RUN cp src/main/resources/application-example.properties src/main/resources/application.properties
+
 # Build the application
 RUN mvn clean package -DskipTests
 
