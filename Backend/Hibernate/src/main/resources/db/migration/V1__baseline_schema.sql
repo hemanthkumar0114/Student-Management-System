@@ -1,0 +1,28 @@
+CREATE TABLE IF NOT EXISTS courses (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    course_name VARCHAR(255) NOT NULL,
+    duration VARCHAR(255) NOT NULL,
+    department VARCHAR(255)
+);
+
+CREATE TABLE IF NOT EXISTS students (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    email VARCHAR(255) NOT NULL UNIQUE,
+    cgpa DOUBLE,
+    city VARCHAR(255),
+    state VARCHAR(255),
+    pincode VARCHAR(255),
+    course_id INT,
+    CONSTRAINT fk_students_course FOREIGN KEY (course_id) REFERENCES courses (id)
+);
+
+CREATE TABLE IF NOT EXISTS users (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    username VARCHAR(50) NOT NULL UNIQUE,
+    email VARCHAR(100) NOT NULL UNIQUE,
+    password VARCHAR(255) NOT NULL,
+    role ENUM('ADMIN', 'USER') NOT NULL,
+    enabled BOOLEAN NOT NULL DEFAULT TRUE,
+    created_at DATETIME(6) NOT NULL
+);
