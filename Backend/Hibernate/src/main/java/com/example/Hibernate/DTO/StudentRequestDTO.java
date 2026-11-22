@@ -14,6 +14,7 @@ public class StudentRequestDTO {
 
     @NotBlank(message = "Email is required")
     @Email(message = "Enter a valid email address")
+    @Size(max = 100, message = "Email cannot exceed 100 characters")
     private String email;
 
     @DecimalMin(value = "0.0", message = "CGPA cannot be negative")
@@ -21,8 +22,14 @@ public class StudentRequestDTO {
     private Double cgpa = 8.0;
 
     private Integer courseid;
+
+    @Size(max = 100, message = "City cannot exceed 100 characters")
     private String city;
+
+    @Size(max = 100, message = "State cannot exceed 100 characters")
     private String state;
+
+    @Size(max = 20, message = "Pincode cannot exceed 20 characters")
     private String pincode;
 
     public StudentRequestDTO() {

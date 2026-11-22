@@ -7,6 +7,7 @@ import com.example.Hibernate.Service.StudentServices;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
@@ -35,6 +36,9 @@ public class StudentController {
             @RequestParam(required = false) String search,
             @RequestParam(required = false) String name,
             @PageableDefault(page = 0, size = 20, sort = "id", direction = Sort.Direction.ASC) Pageable pageable) {
+        if (pageable.getPageSize() > 100) {
+            pageable = PageRequest.of(pageable.getPageNumber(), 100, pageable.getSort());
+        }
         String query = search != null ? search : name;
         if (query != null && !query.trim().isEmpty()) {
             return ResponseEntity.ok(studentServices.searchStudents(query, pageable));

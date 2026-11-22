@@ -9,6 +9,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.DisabledException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
@@ -23,36 +24,19 @@ public class GlobalExceptionHandler {
 
     private static final Logger logger = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
-    // =========================================================
-    // VALIDATION EXCEPTION - 400
-    // =========================================================
-
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ErrorResponse> handleValidation(
             MethodArgumentNotValidException ex,
             HttpServletRequest request) {
 
         Map<String, String> errors = new HashMap<>();
-
-        ex.getBindingResult()
-                .getAllErrors()
-                .forEach(error -> {
-
-                    if (error instanceof FieldError fieldError) {
-
-                        errors.put(
-                                fieldError.getField(),
-                                fieldError.getDefaultMessage()
-                        );
-
-                    } else {
-
-                        errors.put(
-                                error.getObjectName(),
-                                error.getDefaultMessage()
-                        );
-                    }
-                });
+        ex.getBindingResult().getAllErrors().forEach(error -> {
+            if (error instanceof FieldError fieldError) {
+                errors.put(fieldError.getField(), fieldError.getDefaultMessage());
+            } else {
+                errors.put(error.getObjectName(), error.getDefaultMessage());
+            }
+        });
 
         ErrorResponse response = new ErrorResponse(
                 LocalDateTime.now(),
@@ -62,16 +46,8 @@ public class GlobalExceptionHandler {
                 errors
         );
 
-        return new ResponseEntity<>(
-                response,
-                HttpStatus.BAD_REQUEST
-        );
+        return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
     }
-
-
-    // =========================================================
-    // RESOURCE NOT FOUND - 404
-    // =========================================================
 
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<ErrorResponse> handleResourceNotFound(
@@ -86,16 +62,8 @@ public class GlobalExceptionHandler {
                 null
         );
 
-        return new ResponseEntity<>(
-                response,
-                HttpStatus.NOT_FOUND
-        );
+        return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
     }
-
-
-    // =========================================================
-    // DUPLICATE RESOURCE - 409
-    // =========================================================
 
     @ExceptionHandler(DuplicateResourceException.class)
     public ResponseEntity<ErrorResponse> handleDuplicateResource(
@@ -103,11 +71,7 @@ public class GlobalExceptionHandler {
             HttpServletRequest request) {
 
         Map<String, String> errors = new HashMap<>();
-
-        errors.put(
-                "conflict",
-                ex.getMessage()
-        );
+        errors.put("conflict", ex.getMessage());
 
         ErrorResponse response = new ErrorResponse(
                 LocalDateTime.now(),
@@ -117,16 +81,8 @@ public class GlobalExceptionHandler {
                 errors
         );
 
-        return new ResponseEntity<>(
-                response,
-                HttpStatus.CONFLICT
-        );
+        return new ResponseEntity<>(response, HttpStatus.CONFLICT);
     }
-
-
-    // =========================================================
-    // SECURITY - BAD CREDENTIALS - 401
-    // =========================================================
 
     @ExceptionHandler(BadCredentialsException.class)
     public ResponseEntity<ErrorResponse> handleBadCredentials(
@@ -144,16 +100,46 @@ public class GlobalExceptionHandler {
                 errors
         );
 
-        return new ResponseEntity<>(
-                response,
-                HttpStatus.UNAUTHORIZED
-        );
+        return new ResponseEntity<>(response, HttpStatus.UNAUTHORIZED);
     }
 
+    @ExceptionHandler(DisabledException.class)
+    public ResponseEntity<ErrorResponse> handleDisabled(
+            DisabledException ex,
+            HttpServletRequest request) {
 
-    // =========================================================
-    // SECURITY - ACCESS DENIED - 403
-    // =========================================================
+        Map<String, String> errors = new HashMap<>();
+        errors.put("auth", ex.getMessage());
+
+        ErrorResponse response = new ErrorResponse(
+                LocalDateTime.now(),
+                HttpStatus.UNAUTHORIZED.value(),
+                "Account Disabled",
+                request.getRequestURI(),
+                errors
+        );
+
+        return new ResponseEntity<>(response, HttpStatus.UNAUTHORIZED);
+    }
+
+    @ExceptionHandler(AccountLockedException.class)
+    public ResponseEntity<ErrorResponse> handleAccountLocked(
+            AccountLockedException ex,
+            HttpServletRequest request) {
+
+        Map<String, String> errors = new HashMap<>();
+        errors.put("auth", ex.getMessage());
+
+        ErrorResponse response = new ErrorResponse(
+                LocalDateTime.now(),
+                HttpStatus.TOO_MANY_REQUESTS.value(),
+                ex.getMessage(),
+                request.getRequestURI(),
+                errors
+        );
+
+        return new ResponseEntity<>(response, HttpStatus.TOO_MANY_REQUESTS);
+    }
 
     @ExceptionHandler(AccessDeniedException.class)
     public ResponseEntity<ErrorResponse> handleAccessDenied(
@@ -171,16 +157,8 @@ public class GlobalExceptionHandler {
                 errors
         );
 
-        return new ResponseEntity<>(
-                response,
-                HttpStatus.FORBIDDEN
-        );
+        return new ResponseEntity<>(response, HttpStatus.FORBIDDEN);
     }
-
-
-    // =========================================================
-    // DATABASE CONSTRAINT VIOLATION - 409
-    // =========================================================
 
     @ExceptionHandler(DataIntegrityViolationException.class)
     public ResponseEntity<ErrorResponse> handleDataIntegrityViolation(
@@ -188,11 +166,7 @@ public class GlobalExceptionHandler {
             HttpServletRequest request) {
 
         Map<String, String> errors = new HashMap<>();
-
-        errors.put(
-                "conflict",
-                "The requested operation violates a database constraint"
-        );
+        errors.put("conflict", "The requested operation violates a database constraint");
 
         ErrorResponse response = new ErrorResponse(
                 LocalDateTime.now(),
@@ -202,16 +176,8 @@ public class GlobalExceptionHandler {
                 errors
         );
 
-        return new ResponseEntity<>(
-                response,
-                HttpStatus.CONFLICT
-        );
+        return new ResponseEntity<>(response, HttpStatus.CONFLICT);
     }
-
-
-    // =========================================================
-    // ILLEGAL ARGUMENT - 400
-    // =========================================================
 
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<ErrorResponse> handleIllegalArgument(
@@ -219,11 +185,7 @@ public class GlobalExceptionHandler {
             HttpServletRequest request) {
 
         Map<String, String> errors = new HashMap<>();
-
-        errors.put(
-                "error",
-                ex.getMessage()
-        );
+        errors.put("error", ex.getMessage());
 
         ErrorResponse response = new ErrorResponse(
                 LocalDateTime.now(),
@@ -233,16 +195,8 @@ public class GlobalExceptionHandler {
                 errors
         );
 
-        return new ResponseEntity<>(
-                response,
-                HttpStatus.BAD_REQUEST
-        );
+        return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
     }
-
-
-    // =========================================================
-    // GENERAL EXCEPTION - 500 (SANITIZED)
-    // =========================================================
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGeneralException(
@@ -262,9 +216,6 @@ public class GlobalExceptionHandler {
                 errors
         );
 
-        return new ResponseEntity<>(
-                response,
-                HttpStatus.INTERNAL_SERVER_ERROR
-        );
+        return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 }

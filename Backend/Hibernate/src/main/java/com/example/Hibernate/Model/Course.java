@@ -3,6 +3,7 @@ package com.example.Hibernate.Model;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -16,13 +17,16 @@ public class Course {
     private Integer id;
 
     @NotBlank(message = "Course name is required")
+    @Size(min = 2, max = 100, message = "Course name must be between 2 and 100 characters")
     @Column(nullable = false)
     private String courseName;
 
     @NotBlank(message = "Duration is required")
+    @Size(min = 2, max = 50, message = "Duration must be between 2 and 50 characters")
     @Column(nullable = false)
     private String duration;
 
+    @Size(max = 100, message = "Department cannot exceed 100 characters")
     private String department;
 
     @OneToMany(mappedBy = "course", cascade = {CascadeType.PERSIST, CascadeType.MERGE})
