@@ -8,7 +8,7 @@ export const getStoredUser = () => {
   if (!userJson) return null;
   try {
     return JSON.parse(userJson);
-  } catch (e) {
+  } catch {
     return null;
   }
 };
