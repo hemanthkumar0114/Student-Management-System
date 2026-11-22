@@ -11,16 +11,11 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/courses")
+@RequestMapping({"/courses", "/api/courses"})
 public class CourseController {
 
     @Autowired
     private CourseService courseService;
-
-
-    // =========================================================
-    // GET ALL COURSES
-    // =========================================================
 
     @GetMapping
     public ResponseEntity<List<Course>> getAllCourses() {
@@ -28,54 +23,26 @@ public class CourseController {
         return ResponseEntity.ok(courses);
     }
 
-
-    // =========================================================
-    // GET COURSE BY ID
-    // =========================================================
-
     @GetMapping("/{id}")
-    public ResponseEntity<Course> getCourseById(
-            @PathVariable Integer id) {
+    public ResponseEntity<Course> getCourseById(@PathVariable Integer id) {
         Course course = courseService.getCourseById(id);
         return ResponseEntity.ok(course);
     }
 
-
-    // =========================================================
-    // ADD COURSE
-    // =========================================================
-
     @PostMapping
-    public ResponseEntity<Course> addCourse(
-            @Valid @RequestBody Course course) {
+    public ResponseEntity<Course> addCourse(@Valid @RequestBody Course course) {
         Course savedCourse = courseService.addCourse(course);
-        return new ResponseEntity<>(
-                savedCourse,
-                HttpStatus.CREATED
-        );
+        return new ResponseEntity<>(savedCourse, HttpStatus.CREATED);
     }
 
-
-    // =========================================================
-    // UPDATE COURSE
-    // =========================================================
-
     @PutMapping("/{id}")
-    public ResponseEntity<Course> updateCourse(
-            @PathVariable Integer id,
-            @Valid @RequestBody Course course) {
+    public ResponseEntity<Course> updateCourse(@PathVariable Integer id, @Valid @RequestBody Course course) {
         Course updatedCourse = courseService.updateCourse(id, course);
         return ResponseEntity.ok(updatedCourse);
     }
 
-
-    // =========================================================
-    // DELETE COURSE
-    // =========================================================
-
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteCourse(
-            @PathVariable Integer id) {
+    public ResponseEntity<Void> deleteCourse(@PathVariable Integer id) {
         courseService.deleteCourse(id);
         return ResponseEntity.noContent().build();
     }

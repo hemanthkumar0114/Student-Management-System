@@ -3,6 +3,7 @@ package com.example.Hibernate.Service;
 import com.example.Hibernate.DTO.UserCreateDTO;
 import com.example.Hibernate.DTO.UserResponseDTO;
 import com.example.Hibernate.DTO.UserUpdateDTO;
+import com.example.Hibernate.Exception.ResourceNotFoundException;
 import com.example.Hibernate.Model.User;
 import com.example.Hibernate.Repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,7 +30,7 @@ public class UserService {
 
     public UserResponseDTO getUserById(Long id) {
         User user = userRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("User not found with id: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + id));
         return new UserResponseDTO(user);
     }
 
@@ -54,7 +55,7 @@ public class UserService {
 
     public UserResponseDTO updateUser(Long id, UserUpdateDTO dto) {
         User user = userRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("User not found with id: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + id));
 
         if (dto.getUsername() != null && !dto.getUsername().trim().isEmpty() && !dto.getUsername().equals(user.getUsername())) {
             if (userRepository.existsByUsername(dto.getUsername())) {
@@ -88,14 +89,14 @@ public class UserService {
 
     public void deleteUser(Long id) {
         if (!userRepository.existsById(id)) {
-            throw new RuntimeException("User not found with id: " + id);
+            throw new ResourceNotFoundException("User not found with id: " + id);
         }
         userRepository.deleteById(id);
     }
 
     public UserResponseDTO toggleUserStatus(Long id) {
         User user = userRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("User not found with id: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + id));
         user.setEnabled(!user.isEnabled());
         User saved = userRepository.save(user);
         return new UserResponseDTO(saved);

@@ -71,16 +71,18 @@ public class AuthService {
 
             SecurityContextHolder.getContext().setAuthentication(authentication);
             loginAttemptService.loginSucceeded(identifier);
-            loginAttemptService.loginSucceeded(user.getUsername());
-            loginAttemptService.loginSucceeded(user.getEmail());
+            if (!identifier.equalsIgnoreCase(user.getUsername())) {
+                loginAttemptService.loginSucceeded(user.getUsername());
+            }
+            if (!identifier.equalsIgnoreCase(user.getEmail())) {
+                loginAttemptService.loginSucceeded(user.getEmail());
+            }
 
             String jwt = tokenProvider.generateToken(user);
 
             return new LoginResponse(jwt, user.getId(), user.getUsername(), user.getEmail(), user.getRole(), user.isEnabled());
         } catch (BadCredentialsException e) {
             loginAttemptService.loginFailed(identifier);
-            loginAttemptService.loginFailed(user.getUsername());
-            loginAttemptService.loginFailed(user.getEmail());
             throw new BadCredentialsException("Invalid username/email or password");
         }
     }
