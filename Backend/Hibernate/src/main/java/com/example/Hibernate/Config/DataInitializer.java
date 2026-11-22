@@ -51,7 +51,6 @@ public class DataInitializer implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
-        // Seed default ADMIN account if no admin exists
         if (!userRepository.existsByRole(Role.ADMIN)) {
             User admin = new User(
                 adminUsername,
@@ -63,7 +62,6 @@ public class DataInitializer implements CommandLineRunner {
             System.out.println(">>> Initialized default ADMIN account: " + adminUsername);
         }
 
-        // Seed default USER account if no user exists
         if (!userRepository.existsByRole(Role.USER)) {
             User user = new User(
                 "user",
@@ -77,7 +75,6 @@ public class DataInitializer implements CommandLineRunner {
 
         List<Course> courses;
         if (courseRepository.count() == 0) {
-            // 10 Courses
             Course c1 = new Course("Java Full Stack Development", "6 Months", "Software Engineering");
             Course c2 = new Course("Python Full Stack Development", "6 Months", "Software Engineering");
             Course c3 = new Course("Web Development", "4 Months", "Web Technologies");
@@ -95,7 +92,6 @@ public class DataInitializer implements CommandLineRunner {
         }
 
         if (studentRepository.count() == 0 && !courses.isEmpty()) {
-            // 20 Students with 20 Addresses and assigned Courses
             List<Student> students = Arrays.asList(
                 new Student("Arjun Sharma", "arjun.sharma@gmail.com", 9.20, new Address("Bengaluru", "Karnataka", "560001"), courses.get(0 % courses.size())),
                 new Student("Ananya Reddy", "ananya.reddy@gmail.com", 8.85, new Address("Mysuru", "Karnataka", "570001"), courses.get(1 % courses.size())),

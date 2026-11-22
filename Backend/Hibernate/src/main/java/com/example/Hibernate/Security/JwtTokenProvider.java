@@ -22,8 +22,8 @@ public class JwtTokenProvider {
 
     @PostConstruct
     public void validateConfig() {
-        if (jwtSecret == null || jwtSecret.trim().isEmpty()) {
-            throw new IllegalStateException("JWT secret environment variable/property (JWT_SECRET / app.jwt.secret) must be provided and non-empty.");
+        if (jwtSecret == null || jwtSecret.trim().length() < 32) {
+            throw new IllegalStateException("JWT secret environment variable/property (JWT_SECRET / app.jwt.secret) must be provided and at least 32 characters long.");
         }
     }
 
