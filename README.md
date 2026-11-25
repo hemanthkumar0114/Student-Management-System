@@ -26,6 +26,7 @@ A robust, enterprise-grade full-stack Student Management System built with Sprin
 - **User Administration**:
   - Role management and user lifecycle control (enable/disable accounts).
   - Pre-seeded administrative and default user credentials via DataInitializer.
+  - Strict administrator safety guarantees: enforces immutable active administrator quorum (prevents deletion, disabling, or demotion of the last active administrator) and prevents administrators from accidentally disabling, deleting, or demoting their own accounts.
 - **Observability & Deployment**:
   - Spring Boot Actuator endpoint exposing `/actuator/health`.
   - Multi-stage Docker builds with cached dependency layers and non-root user execution.
@@ -65,7 +66,7 @@ A robust, enterprise-grade full-stack Student Management System built with Sprin
 - **DevOps & Infrastructure**:
   - Docker (Multi-stage build, unprivileged user)
   - GitHub Actions CI
-  - Aiven MySQL, Render, and Netlify
+  - TiDB Cloud (MySQL-Compatible), Render, and Netlify
 
 ---
 
@@ -110,6 +111,12 @@ Flyway Migrations ──► Database (MySQL in Production / H2 in Tests)
 | `CORS_ALLOWED_ORIGINS` | Yes | Permitted origins (comma-separated) | `http://localhost:5173` |
 | `LOGIN_MAX_ATTEMPTS` | No | Consecutive failed login threshold | `5` (default) |
 | `LOGIN_LOCKOUT_MINUTES` | No | Lockout duration in minutes | `15` (default) |
+| `APP_DEMO_ENABLED` | No | Enable demo USER account creation | `false` (default) |
+
+> **Account Initialization**:
+> - The initial **ADMIN** account is created only from the configured `ADMIN_PASSWORD` (with `ADMIN_USERNAME` and `ADMIN_EMAIL`).
+> - The default demo **USER** account is only created when `APP_DEMO_ENABLED=true` (defaults to `false`).
+> - Quick-login demo buttons on the frontend login page are rendered only in development mode (`import.meta.env.DEV`), and passwords are never exposed in production builds.
 
 ### Frontend (`Frontend/student-management-frontend/.env`)
 
@@ -136,7 +143,7 @@ All tests run locally without external database dependencies using an in-memory 
 
 ### Running Component Suites Independently
 
-- **Backend Test Suite (35 tests)**:
+- **Backend Test Suite (53 tests)**:
   ```bash
   cd Backend/Hibernate
   ./mvnw test
@@ -146,6 +153,7 @@ All tests run locally without external database dependencies using an in-memory 
   cd Frontend/student-management-frontend
   npm test
   ```
+- **Combined Test Coverage**: 62 automated tests (53 backend integration/unit tests + 9 frontend service unit tests).
 
 ---
 
