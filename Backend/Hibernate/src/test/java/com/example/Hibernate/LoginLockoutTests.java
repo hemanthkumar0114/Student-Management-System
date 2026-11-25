@@ -75,4 +75,55 @@ class LoginLockoutTests extends ApiTestSupport {
         ResponseEntity<LoginResponse> finalSuccessResponse = restTemplate.postForEntity("/auth/login", successRequest, LoginResponse.class);
         assertEquals(HttpStatus.OK, finalSuccessResponse.getStatusCode());
     }
+
+    @Test
+    @DisplayName("Lockout properties validation at startup")
+    void lockoutPropertiesValidation() throws Exception {
+        LoginAttemptService service = new LoginAttemptService();
+        java.lang.reflect.Field maxAttemptsField = LoginAttemptService.class.getDeclaredField("maxAttempts");
+        maxAttemptsField.setAccessible(true);
+        java.lang.reflect.Field durationField = LoginAttemptService.class.getDeclaredField("lockoutDurationMinutes");
+        durationField.setAccessible(true);
+
+        maxAttemptsField.setInt(service, 0);
+        durationField.setInt(service, 15);
+        assertThrows(IllegalStateException.class, service::validateProperties);
+
+        maxAttemptsField.setInt(service, 5);
+        durationField.setInt(service, 0);
+        assertThrows(IllegalStateException.class, service::validateProperties);
+
+        maxAttemptsField.setInt(service, 1);
+        durationField.setInt(service, 1);
+        assertDoesNotThrow(service::validateProperties);
+    }
+
+    @Test
+    @DisplayName("Repeated attempts while locked do not extend lockout expiry")
+    void repeatedAttemptsDoNotExtendLockout() throws Exception {
+        String testUser = "lockout_extend_test";
+        for (int i = 0; i < 5; i++) {
+            loginAttemptService.loginFailed(testUser);
+        }
+        assertTrue(loginAttemptService.isLocked(testUser));
+
+        java.lang.reflect.Field attemptsField = LoginAttemptService.class.getDeclaredField("attempts");
+        attemptsField.setAccessible(true);
+        java.util.Map<?, ?> attemptsMap = (java.util.Map<?, ?>) attemptsField.get(loginAttemptService);
+        Object attemptObj = attemptsMap.get(testUser);
+        assertNotNull(attemptObj);
+
+        java.lang.reflect.Field expiryField = attemptObj.getClass().getDeclaredField("lockoutExpiry");
+        expiryField.setAccessible(true);
+        java.time.Instant initialExpiry = (java.time.Instant) expiryField.get(attemptObj);
+        assertNotNull(initialExpiry);
+
+        Thread.sleep(50);
+        for (int i = 0; i < 5; i++) {
+            loginAttemptService.loginFailed(testUser);
+        }
+
+        java.time.Instant expiryAfterRepeated = (java.time.Instant) expiryField.get(attemptObj);
+        assertEquals(initialExpiry, expiryAfterRepeated);
+    }
 }

@@ -160,28 +160,29 @@ function Login() {
           </button>
         </form>
 
-        {/* QUICK TEST ACCOUNTS DEMO ASSISTANT */}
-        <div className="login-quick-accounts">
-          <span className="quick-accounts-title">Quick Demo Login:</span>
-          <div className="quick-buttons">
-            <button
-              type="button"
-              className="quick-chip chip-admin"
-              onClick={() => fillQuickCredentials("admin")}
-              title="Click to load default ADMIN credentials"
-            >
-              <strong>ADMIN</strong> (admin / admin123)
-            </button>
-            <button
-              type="button"
-              className="quick-chip chip-user"
-              onClick={() => fillQuickCredentials("user")}
-              title="Click to load default USER credentials"
-            >
-              <strong>USER</strong> (user / user123)
-            </button>
+        {import.meta.env.DEV && (
+          <div className="login-quick-accounts">
+            <span className="quick-accounts-title">Quick Demo Login:</span>
+            <div className="quick-buttons">
+              <button
+                type="button"
+                className="quick-chip chip-admin"
+                onClick={() => fillQuickCredentials("admin")}
+                title="Click to load default ADMIN credentials"
+              >
+                <strong>ADMIN</strong> (admin / admin123)
+              </button>
+              <button
+                type="button"
+                className="quick-chip chip-user"
+                onClick={() => fillQuickCredentials("user")}
+                title="Click to load default USER credentials"
+              >
+                <strong>USER</strong> (user / user123)
+              </button>
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );

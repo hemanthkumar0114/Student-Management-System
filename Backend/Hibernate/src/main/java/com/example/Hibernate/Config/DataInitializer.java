@@ -42,6 +42,9 @@ public class DataInitializer implements CommandLineRunner {
     @Value("${app.admin.password}")
     private String adminPassword;
 
+    @Value("${app.demo.enabled:false}")
+    private boolean demoEnabled;
+
     @PostConstruct
     public void validateConfig() {
         if (adminPassword == null || adminPassword.trim().isEmpty()) {
@@ -53,16 +56,16 @@ public class DataInitializer implements CommandLineRunner {
     public void run(String... args) throws Exception {
         if (!userRepository.existsByRole(Role.ADMIN)) {
             User admin = new User(
-                adminUsername,
-                adminEmail,
+                adminUsername.trim(),
+                adminEmail.trim().toLowerCase(),
                 passwordEncoder.encode(adminPassword),
                 Role.ADMIN
             );
             userRepository.save(admin);
-            System.out.println(">>> Initialized default ADMIN account: " + adminUsername);
+            System.out.println(">>> Initialized default ADMIN account: " + adminUsername.trim());
         }
 
-        if (!userRepository.existsByRole(Role.USER)) {
+        if (demoEnabled && !userRepository.existsByRole(Role.USER)) {
             User user = new User(
                 "user",
                 "user@example.com",

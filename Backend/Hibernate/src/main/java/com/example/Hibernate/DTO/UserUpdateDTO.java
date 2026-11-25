@@ -2,6 +2,7 @@ package com.example.Hibernate.DTO;
 
 import com.example.Hibernate.Model.Role;
 import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
 public class UserUpdateDTO {
@@ -17,7 +18,7 @@ public class UserUpdateDTO {
 
     private Boolean enabled;
 
-    @Size(min = 6, max = 100, message = "Password must be between 6 and 100 characters")
+    @Pattern(regexp = "^$|^.{8,72}$", message = "Password must be between 8 and 72 characters")
     private String password;
 
     public UserUpdateDTO() {
@@ -28,7 +29,7 @@ public class UserUpdateDTO {
     }
 
     public void setUsername(String username) {
-        this.username = username;
+        this.username = username != null ? username.trim() : null;
     }
 
     public String getEmail() {
@@ -36,7 +37,7 @@ public class UserUpdateDTO {
     }
 
     public void setEmail(String email) {
-        this.email = email;
+        this.email = email != null ? email.trim() : null;
     }
 
     public Role getRole() {

@@ -134,4 +134,74 @@ class RoleAccessMatrixTests extends ApiTestSupport {
             assertEquals(HttpStatus.OK, admin.getStatusCode());
         }
     }
+
+    @Test
+    @DisplayName("PUT /students and /api/students role matrix")
+    void putStudentsRoleMatrix() {
+        for (String prefix : new String[]{"/students", "/api/students"}) {
+            Student student = studentRepository.save(new Student("Student For Put", unique("s_put") + "@mail.com", 8.0, null, courseRepository.findById(sampleCourseId).orElse(null)));
+            StudentRequestDTO updateDto = new StudentRequestDTO("Updated Student", unique("s_upd") + "@mail.com", 8.5, sampleCourseId, "City", "ST", "123456");
+
+            ResponseEntity<String> anon = restTemplate.exchange(prefix + "/" + student.getId(), HttpMethod.PUT, new HttpEntity<>(updateDto), String.class);
+            assertEquals(HttpStatus.UNAUTHORIZED, anon.getStatusCode());
+
+            ResponseEntity<String> user = restTemplate.exchange(prefix + "/" + student.getId(), HttpMethod.PUT, new HttpEntity<>(updateDto, authHeaders(userToken)), String.class);
+            assertEquals(HttpStatus.FORBIDDEN, user.getStatusCode());
+
+            ResponseEntity<String> admin = restTemplate.exchange(prefix + "/" + student.getId(), HttpMethod.PUT, new HttpEntity<>(updateDto, authHeaders(adminToken)), String.class);
+            assertEquals(HttpStatus.OK, admin.getStatusCode());
+        }
+    }
+
+    @Test
+    @DisplayName("DELETE /students and /api/students role matrix")
+    void deleteStudentsRoleMatrix() {
+        for (String prefix : new String[]{"/students", "/api/students"}) {
+            Student student = studentRepository.save(new Student("Student For Del", unique("s_del") + "@mail.com", 8.0, null, courseRepository.findById(sampleCourseId).orElse(null)));
+
+            ResponseEntity<String> anon = restTemplate.exchange(prefix + "/" + student.getId(), HttpMethod.DELETE, null, String.class);
+            assertEquals(HttpStatus.UNAUTHORIZED, anon.getStatusCode());
+
+            ResponseEntity<String> user = restTemplate.exchange(prefix + "/" + student.getId(), HttpMethod.DELETE, new HttpEntity<>(authHeaders(userToken)), String.class);
+            assertEquals(HttpStatus.FORBIDDEN, user.getStatusCode());
+
+            ResponseEntity<String> admin = restTemplate.exchange(prefix + "/" + student.getId(), HttpMethod.DELETE, new HttpEntity<>(authHeaders(adminToken)), String.class);
+            assertEquals(HttpStatus.OK, admin.getStatusCode());
+        }
+    }
+
+    @Test
+    @DisplayName("PUT /courses and /api/courses role matrix")
+    void putCoursesRoleMatrix() {
+        for (String prefix : new String[]{"/courses", "/api/courses"}) {
+            Course course = courseRepository.save(new Course(unique("PutCourse"), "3 Months", "IT"));
+            Course updateDto = new Course("Updated " + course.getCourseName(), "5 Months", "IT");
+
+            ResponseEntity<String> anon = restTemplate.exchange(prefix + "/" + course.getId(), HttpMethod.PUT, new HttpEntity<>(updateDto), String.class);
+            assertEquals(HttpStatus.UNAUTHORIZED, anon.getStatusCode());
+
+            ResponseEntity<String> user = restTemplate.exchange(prefix + "/" + course.getId(), HttpMethod.PUT, new HttpEntity<>(updateDto, authHeaders(userToken)), String.class);
+            assertEquals(HttpStatus.FORBIDDEN, user.getStatusCode());
+
+            ResponseEntity<String> admin = restTemplate.exchange(prefix + "/" + course.getId(), HttpMethod.PUT, new HttpEntity<>(updateDto, authHeaders(adminToken)), String.class);
+            assertEquals(HttpStatus.OK, admin.getStatusCode());
+        }
+    }
+
+    @Test
+    @DisplayName("DELETE /courses and /api/courses role matrix")
+    void deleteCoursesRoleMatrix() {
+        for (String prefix : new String[]{"/courses", "/api/courses"}) {
+            Course course = courseRepository.save(new Course(unique("DelCourse"), "3 Months", "IT"));
+
+            ResponseEntity<String> anon = restTemplate.exchange(prefix + "/" + course.getId(), HttpMethod.DELETE, null, String.class);
+            assertEquals(HttpStatus.UNAUTHORIZED, anon.getStatusCode());
+
+            ResponseEntity<String> user = restTemplate.exchange(prefix + "/" + course.getId(), HttpMethod.DELETE, new HttpEntity<>(authHeaders(userToken)), String.class);
+            assertEquals(HttpStatus.FORBIDDEN, user.getStatusCode());
+
+            ResponseEntity<String> admin = restTemplate.exchange(prefix + "/" + course.getId(), HttpMethod.DELETE, new HttpEntity<>(authHeaders(adminToken)), String.class);
+            assertEquals(HttpStatus.NO_CONTENT, admin.getStatusCode());
+        }
+    }
 }

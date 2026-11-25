@@ -84,6 +84,25 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(response, HttpStatus.CONFLICT);
     }
 
+    @ExceptionHandler(AdminSafetyException.class)
+    public ResponseEntity<ErrorResponse> handleAdminSafety(
+            AdminSafetyException ex,
+            HttpServletRequest request) {
+
+        Map<String, String> errors = new HashMap<>();
+        errors.put("conflict", ex.getMessage());
+
+        ErrorResponse response = new ErrorResponse(
+                LocalDateTime.now(),
+                HttpStatus.CONFLICT.value(),
+                ex.getMessage(),
+                request.getRequestURI(),
+                errors
+        );
+
+        return new ResponseEntity<>(response, HttpStatus.CONFLICT);
+    }
+
     @ExceptionHandler(BadCredentialsException.class)
     public ResponseEntity<ErrorResponse> handleBadCredentials(
             BadCredentialsException ex,

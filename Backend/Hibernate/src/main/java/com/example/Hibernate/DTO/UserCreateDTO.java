@@ -18,7 +18,7 @@ public class UserCreateDTO {
     private String email;
 
     @NotBlank(message = "Password is required")
-    @Size(min = 6, max = 100, message = "Password must be between 6 and 100 characters")
+    @Size(min = 8, max = 72, message = "Password must be between 8 and 72 characters")
     private String password;
 
     @NotNull(message = "Role is required")
@@ -28,8 +28,8 @@ public class UserCreateDTO {
     }
 
     public UserCreateDTO(String username, String email, String password, Role role) {
-        this.username = username;
-        this.email = email;
+        this.username = username != null ? username.trim() : null;
+        this.email = email != null ? email.trim() : null;
         this.password = password;
         this.role = role;
     }
@@ -39,7 +39,7 @@ public class UserCreateDTO {
     }
 
     public void setUsername(String username) {
-        this.username = username;
+        this.username = username != null ? username.trim() : null;
     }
 
     public String getEmail() {
@@ -47,7 +47,7 @@ public class UserCreateDTO {
     }
 
     public void setEmail(String email) {
-        this.email = email;
+        this.email = email != null ? email.trim() : null;
     }
 
     public String getPassword() {

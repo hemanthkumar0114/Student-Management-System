@@ -2,8 +2,10 @@ import React, { useState, useEffect } from "react";
 import { getAllUsers, createUser, updateUser, toggleUserStatus, deleteUser } from "../services/userService";
 import ConfirmDialog from "../components/ConfirmDialog";
 import Toast from "../components/Toast";
+import { useAuth } from "../context/AuthContext";
 
 function AdminUsers() {
+  const { user: currentUser } = useAuth();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -201,49 +203,61 @@ function AdminUsers() {
                 </tr>
               </thead>
               <tbody>
-                {users.map((u) => (
-                  <tr key={u.id}>
-                    <td>#{u.id}</td>
-                    <td className="font-semibold text-slate-800">{u.username}</td>
-                    <td className="text-slate-600">{u.email}</td>
-                    <td>
-                      <span className={`badge ${u.role === "ADMIN" ? "badge-purple" : "badge-blue"}`}>
-                        {u.role}
-                      </span>
-                    </td>
-                    <td>
-                      <button
-                        onClick={() => handleToggleStatus(u)}
-                        className={`status-toggle-btn ${u.enabled ? "status-active" : "status-disabled"}`}
-                        title="Click to toggle account status"
-                      >
-                        <span className="status-dot"></span>
-                        {u.enabled ? "Active / Enabled" : "Disabled"}
-                      </button>
-                    </td>
-                    <td className="text-xs text-slate-500">
-                      {u.createdAt ? new Date(u.createdAt).toLocaleDateString() : "N/A"}
-                    </td>
-                    <td className="text-right">
-                      <div className="action-buttons-cell justify-end">
+                {users.map((u) => {
+                  const isSelf = currentUser && (currentUser.id === u.id || currentUser.username === u.username);
+                  return (
+                    <tr key={u.id}>
+                      <td>#{u.id}</td>
+                      <td className="font-semibold text-slate-800">
+                        {u.username}
+                        {isSelf && (
+                          <span className="badge badge-purple text-xs ml-2" title="Your currently logged-in account">
+                            You
+                          </span>
+                        )}
+                      </td>
+                      <td className="text-slate-600">{u.email}</td>
+                      <td>
+                        <span className={`badge ${u.role === "ADMIN" ? "badge-purple" : "badge-blue"}`}>
+                          {u.role}
+                        </span>
+                      </td>
+                      <td>
                         <button
-                          onClick={() => openEditModal(u)}
-                          className="btn btn-xs btn-outline"
-                          title="Edit User Role / Status / Reset Password"
+                          onClick={() => !isSelf && handleToggleStatus(u)}
+                          disabled={isSelf}
+                          className={`status-toggle-btn ${u.enabled ? "status-active" : "status-disabled"} ${isSelf ? "opacity-60 cursor-not-allowed" : ""}`}
+                          title={isSelf ? "Administrators cannot disable their own account" : "Click to toggle account status"}
                         >
-                          Edit
+                          <span className="status-dot"></span>
+                          {u.enabled ? "Active / Enabled" : "Disabled"}
                         </button>
-                        <button
-                          onClick={() => setDeleteTarget(u)}
-                          className="btn btn-xs btn-danger-outline"
-                          title="Delete User Account"
-                        >
-                          Delete
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
+                      </td>
+                      <td className="text-xs text-slate-500">
+                        {u.createdAt ? new Date(u.createdAt).toLocaleDateString() : "N/A"}
+                      </td>
+                      <td className="text-right">
+                        <div className="action-buttons-cell justify-end">
+                          <button
+                            onClick={() => openEditModal(u)}
+                            className="btn btn-xs btn-outline"
+                            title="Edit User Role / Status / Reset Password"
+                          >
+                            Edit
+                          </button>
+                          <button
+                            onClick={() => !isSelf && setDeleteTarget(u)}
+                            disabled={isSelf}
+                            className={`btn btn-xs btn-danger-outline ${isSelf ? "opacity-40 cursor-not-allowed" : ""}`}
+                            title={isSelf ? "Administrators cannot delete their own account" : "Delete User Account"}
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           )}
@@ -299,7 +313,7 @@ function AdminUsers() {
                 <input
                   type="password"
                   className="form-control"
-                  placeholder={modalMode === "create" ? "Minimum 6 characters" : "New password (optional)"}
+                  placeholder={modalMode === "create" ? "Minimum 8 characters" : "New password (optional, min 8 chars)"}
                   value={formData.password}
                   onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                   required={modalMode === "create"}
@@ -313,10 +327,14 @@ function AdminUsers() {
                     className="form-select"
                     value={formData.role}
                     onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+                    disabled={modalMode === "edit" && selectedUser && currentUser && (selectedUser.id === currentUser.id || selectedUser.username === currentUser.username)}
                   >
                     <option value="USER">USER (Standard Access)</option>
                     <option value="ADMIN">ADMIN (Full Privileges)</option>
                   </select>
+                  {modalMode === "edit" && selectedUser && currentUser && (selectedUser.id === currentUser.id || selectedUser.username === currentUser.username) && (
+                    <small className="text-slate-400 text-xs block mt-1">You cannot modify your own role.</small>
+                  )}
                 </div>
 
                 <div className="form-group">
@@ -325,10 +343,14 @@ function AdminUsers() {
                     className="form-select"
                     value={formData.enabled}
                     onChange={(e) => setFormData({ ...formData, enabled: e.target.value === "true" })}
+                    disabled={modalMode === "edit" && selectedUser && currentUser && (selectedUser.id === currentUser.id || selectedUser.username === currentUser.username)}
                   >
                     <option value="true">Enabled / Active</option>
                     <option value="false">Disabled / Suspended</option>
                   </select>
+                  {modalMode === "edit" && selectedUser && currentUser && (selectedUser.id === currentUser.id || selectedUser.username === currentUser.username) && (
+                    <small className="text-slate-400 text-xs block mt-1">You cannot disable your own account.</small>
+                  )}
                 </div>
               </div>
 

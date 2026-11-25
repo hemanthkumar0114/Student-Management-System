@@ -11,6 +11,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.security.Principal;
 import java.util.List;
 import java.util.Map;
 
@@ -39,20 +40,23 @@ public class AdminUserController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<UserResponseDTO> updateUser(@PathVariable Long id, @Valid @RequestBody UserUpdateDTO userUpdateDTO) {
-        UserResponseDTO updated = userService.updateUser(id, userUpdateDTO);
+    public ResponseEntity<UserResponseDTO> updateUser(@PathVariable Long id, @Valid @RequestBody UserUpdateDTO userUpdateDTO, Principal principal) {
+        String currentAdmin = principal != null ? principal.getName() : null;
+        UserResponseDTO updated = userService.updateUser(id, userUpdateDTO, currentAdmin);
         return ResponseEntity.ok(updated);
     }
 
     @PatchMapping("/{id}/status")
-    public ResponseEntity<UserResponseDTO> toggleUserStatus(@PathVariable Long id) {
-        UserResponseDTO updated = userService.toggleUserStatus(id);
+    public ResponseEntity<UserResponseDTO> toggleUserStatus(@PathVariable Long id, Principal principal) {
+        String currentAdmin = principal != null ? principal.getName() : null;
+        UserResponseDTO updated = userService.toggleUserStatus(id, currentAdmin);
         return ResponseEntity.ok(updated);
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Map<String, String>> deleteUser(@PathVariable Long id) {
-        userService.deleteUser(id);
+    public ResponseEntity<Map<String, String>> deleteUser(@PathVariable Long id, Principal principal) {
+        String currentAdmin = principal != null ? principal.getName() : null;
+        userService.deleteUser(id, currentAdmin);
         return ResponseEntity.ok(Map.of("message", "User account deleted successfully with ID: " + id));
     }
 }

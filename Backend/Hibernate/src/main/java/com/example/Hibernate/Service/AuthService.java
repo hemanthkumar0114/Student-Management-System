@@ -41,13 +41,13 @@ public class AuthService {
     private LoginAttemptService loginAttemptService;
 
     public LoginResponse login(LoginRequest loginRequest) {
-        String identifier = loginRequest.getUsernameOrEmail();
+        String identifier = loginRequest.getUsernameOrEmail() != null ? loginRequest.getUsernameOrEmail().trim() : "";
 
         if (loginAttemptService.isLocked(identifier)) {
             throw new AccountLockedException("Too many failed login attempts. Please try again later.");
         }
 
-        Optional<User> optionalUser = userRepository.findByUsernameOrEmail(identifier, identifier);
+        Optional<User> optionalUser = userRepository.findByUsernameOrEmail(identifier, identifier.toLowerCase());
 
         if (optionalUser.isEmpty()) {
             passwordEncoder.matches(loginRequest.getPassword() != null ? loginRequest.getPassword() : "", DUMMY_HASH);

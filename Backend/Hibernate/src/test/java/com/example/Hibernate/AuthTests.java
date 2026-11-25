@@ -112,4 +112,51 @@ class AuthTests extends ApiTestSupport {
         assertNotNull(response.getBody());
         assertEquals(401, response.getBody().getStatus());
     }
+
+    @Test
+    @DisplayName("User disabled after receiving JWT is rejected on next request with 401")
+    void userDisabledAfterJwtRejected() {
+        String username = unique("dis_jwt");
+        String email = username + "@example.com";
+        String password = "password123";
+        com.example.Hibernate.Model.User user = createTestUser(username, email, password, Role.USER, true);
+
+        String token = obtainToken(username, password);
+        assertNotNull(token);
+
+        HttpEntity<Void> entity = new HttpEntity<>(authHeaders(token));
+        ResponseEntity<UserResponseDTO> initialRes = restTemplate.exchange("/auth/me", HttpMethod.GET, entity, UserResponseDTO.class);
+        assertEquals(HttpStatus.OK, initialRes.getStatusCode());
+
+        user.setEnabled(false);
+        userRepository.save(user);
+
+        ResponseEntity<String> rejectedMeRes = restTemplate.exchange("/auth/me", HttpMethod.GET, entity, String.class);
+        assertEquals(HttpStatus.UNAUTHORIZED, rejectedMeRes.getStatusCode());
+        assertTrue(rejectedMeRes.getBody().contains("Account has been disabled") || rejectedMeRes.getBody().contains("disabled"));
+
+        ResponseEntity<String> rejectedStudentRes = restTemplate.exchange("/students", HttpMethod.GET, entity, String.class);
+        assertEquals(HttpStatus.UNAUTHORIZED, rejectedStudentRes.getStatusCode());
+    }
+
+    @Test
+    @DisplayName("Auth responses do not contain password hash")
+    void authResponsesDoNotLeakPasswordHash() {
+        String username = unique("pwd_leak");
+        String email = username + "@example.com";
+        String password = "password123";
+        createTestUser(username, email, password, Role.USER, true);
+
+        LoginRequest request = new LoginRequest(username, password);
+        ResponseEntity<String> loginRes = restTemplate.postForEntity("/auth/login", request, String.class);
+        assertEquals(HttpStatus.OK, loginRes.getStatusCode());
+        assertFalse(loginRes.getBody().contains("password"));
+        assertFalse(loginRes.getBody().contains("$2a$"));
+
+        String token = obtainToken(username, password);
+        ResponseEntity<String> meRes = restTemplate.exchange("/auth/me", HttpMethod.GET, new HttpEntity<>(authHeaders(token)), String.class);
+        assertEquals(HttpStatus.OK, meRes.getStatusCode());
+        assertFalse(meRes.getBody().contains("password"));
+        assertFalse(meRes.getBody().contains("$2a$"));
+    }
 }
